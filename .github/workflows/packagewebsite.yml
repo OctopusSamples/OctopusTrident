@@ -1,0 +1,35 @@
+name: .NET Core
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Set version
+      id: set-version
+      run: echo "::set-env name=2020.1.1.$GITHUB_RUN_NUMBER
+    
+    - name: Make package directories
+      run: mkdir -p ./packagesoutput/
+      
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    
+    - name: Install Octopus CLI
+      run: |
+        sudo apt update && sudo apt install --no-install-recommends gnupg curl ca-certificates apt-transport-https && \
+        curl -sSfL https://apt.octopus.com/public.key | sudo apt-key add - && \
+        sudo sh -c "echo deb https://apt.octopus.com/ stable main > /etc/apt/sources.list.d/octopus.com.list" && \
+        sudo apt update && sudo apt install octopuscli 
+      
+    - name: Build and Package Website
+      run: dotnet publish ./src/Octopus.Trident.Web/Octopus.Trident.Web.csproj --output ./packagesoutput/Octopus.Trident.Web/ --configuration Release --runtime linux-x64
