@@ -11,17 +11,10 @@ jobs:
   build:
     name: Build and Push Database
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-      
-    - name: Set version
-      id: set-version
-      run: echo "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
-    
-    - name: Make package directories
-      run: mkdir -p ./packagesoutput/
+    - uses: actions/checkout@v2      
     
     - name: Install and build Redgate Packages
       run: |
@@ -45,9 +38,10 @@ jobs:
         $project = "db/src"
         $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase $OctopusSQLServerConnectionString
 
-        $PackageVersionNumber = ${env:PACKAGE_VERSION}
+        $PackageVersionNumber = "${env:VERSION_SUFFIX}.${env.GITHUB_RUN_NUMBER}"
         Write-Host $PackageVersionNumber
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
+        New-Item "packagesoutput" -ItemType Directory
         Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
-      shell: pwsh     
+      shell: powershell     
         
