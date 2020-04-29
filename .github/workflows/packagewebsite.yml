@@ -15,7 +15,7 @@ jobs:
       
     - name: Set version
       id: set-version
-      run: echo "::set-env name=2020.1.1.$GITHUB_RUN_NUMBER"
+      run: echo "::set-env PACKAGE_VERSION=2020.1.1.$GITHUB_RUN_NUMBER"
     
     - name: Make package directories
       run: mkdir -p ./packagesoutput/

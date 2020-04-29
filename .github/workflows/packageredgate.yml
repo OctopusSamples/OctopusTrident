@@ -11,17 +11,19 @@ jobs:
   build:
     name: Build and Push Database
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
       
     - name: Set version
       id: set-version
-      run: echo "::set-env name=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
+      run: Write-Host "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
+      shell: powershell
     
     - name: Make package directories
-      run: mkdir -p ./packagesoutput/       
+      run: New-Item -path packagesoutput -ItemType Directory
+      shell: powershell
     
     - name: Install Redgate Cmdlets
       run: |
@@ -33,6 +35,23 @@ jobs:
         Import-PackageProvider PowerShellGet 
         Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
 
-        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue
-      shell: pwsh
+        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue -AcceptLicense
+      shell: powershell
+
+    - name: Build Redgate Package
+      run: |
+        $OctopusSQLServer = ${env:OCTOPUS_SQL_SERVER}
+        Write-Host $OctopusSQLServer
+
+        $OctopusSQLServerUserName = ${env:OCTOPUS_SQL_SERVER_USERNAME}
+        $OctopusSQLServerPassword = ${env:OCTOPUS_SQL_SERVER_PASSWORD}
+        $OctopusSQLServerConnectionString="Server=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+
+        $project = "db\src"
+        $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase $OctopusSQLServerConnectionString
+
+        $PackageVersionNumber = ${env:PACKAGE_VERSION}
+        Write-Host $PackageVersionNumber
+        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
+        Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput"        
         
