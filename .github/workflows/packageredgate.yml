@@ -16,11 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2      
     
-    - name: Install and build Redgate Packages
-      env:
-        SQL_SERVER: ${{ secrets.OCTOPUS_SQL_SERVER }}
-        SQL_SERVER_USERNAME: ${{ secrets.OCTOPUS_SQL_SERVER_USERNAME }}
-        SQL_SERVER_PASSWORD: ${{ secrets.OCTOPUS_SQL_SERVER_PASSWORD }}
+    - name: Install and build Redgate Packages      
       run: |
         $LocalModules = (New-Item "$PSScriptRoot\Modules" -ItemType Directory -Force).FullName
         Write-Host "LocalModules: $LocalModules"
@@ -32,15 +28,9 @@ jobs:
 
         Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction Stop -AcceptLicense
         Import-Module SqlChangeAutomation
-        $OctopusSQLServer = $env:OCTOPUS_SQL_SERVER
-        Write-Host "Octopus SQL Server: $OctopusSQLServer"
-
-        $OctopusSQLServerUserName = $env:OCTOPUS_SQL_SERVER_USERNAME
-        $OctopusSQLServerPassword = $env:OCTOPUS_SQL_SERVER_PASSWORD
-        $OctopusSQLServerConnectionString="Data Source=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
-
+        
         $project = "db/src"
-        $validatedArtifact = $project | Invoke-DatabaseBuild
+        $validatedProject = $project | Invoke-DatabaseBuild
 
         $PackageVersionNumber = "${env:VERSION_SUFFIX}.${env:GITHUB_RUN_NUMBER}"
         Write-Host $PackageVersionNumber
