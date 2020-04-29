@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build and Push Database
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -19,11 +19,11 @@ jobs:
     - name: Set version
       id: set-version
       run: Write-Host "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
-      shell: powershell
+      shell: pwsh
     
     - name: Make package directories
       run: New-Item -path packagesoutput -ItemType Directory
-      shell: powershell
+      shell: pwsh
     
     - name: Install Redgate Cmdlets
       run: |
@@ -36,7 +36,7 @@ jobs:
         Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
 
         Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue -AcceptLicense
-      shell: powershell
+      shell: pwsh
 
     - name: Build Redgate Package
       run: |
@@ -53,5 +53,6 @@ jobs:
         $PackageVersionNumber = ${env:PACKAGE_VERSION}
         Write-Host $PackageVersionNumber
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
-        Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput"        
+        Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
+      shell: pwsh       
         
