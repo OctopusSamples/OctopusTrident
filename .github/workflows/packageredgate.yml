@@ -5,7 +5,7 @@ on:
     branches: [ master ]    
 
 env:
-  VERSION_SUFFIX: 2020.1.1
+  VERSION_SUFFIX: 2020.1.1.$GITHUB_RUN_NUMBER
 
 jobs:
   build:
@@ -18,14 +18,13 @@ jobs:
       
     - name: Set version
       id: set-version
-      run: Write-Host "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
-      shell: pwsh
+      run: echo "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
     
     - name: Make package directories
       run: New-Item -path packagesoutput -ItemType Directory
       shell: pwsh
     
-    - name: Install Redgate Cmdlets
+    - name: Install and build Redgate Packages
       run: |
         $LocalModules = (New-Item "$Home\Documents\WindowsPowerShell\Modules" -ItemType Directory -Force).FullName
         Write-Host "LocalModules: $LocalModules"
@@ -36,10 +35,6 @@ jobs:
         Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
 
         Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue -AcceptLicense
-      shell: pwsh
-
-    - name: Build Redgate Package
-      run: |
         $OctopusSQLServer = ${env:OCTOPUS_SQL_SERVER}
         Write-Host $OctopusSQLServer
 
@@ -54,5 +49,5 @@ jobs:
         Write-Host $PackageVersionNumber
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
         Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
-      shell: pwsh       
+      shell: pwsh     
         
