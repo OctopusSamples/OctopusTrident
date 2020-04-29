@@ -1,0 +1,39 @@
+name: Package Database
+
+on:
+  push:
+    paths:
+    - 'db/src/**'
+
+env:
+  VERSION_SUFFIX: 2020.1.1
+
+jobs:
+  build:
+    name: Build and Push Database
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Set version
+      id: set-version
+      run: echo "::set-env name=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
+    
+    - name: Make package directories
+      run: mkdir -p ./packagesoutput/       
+    
+    - name: Install Redgate Cmdlets
+      run: |
+        $LocalModules = (New-Item "$Home\Documents\WindowsPowerShell\Modules" -ItemType Directory -Force).FullName
+        Write-Host "LocalModules: $LocalModules"
+        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
+        
+        Get-PackageProvider NuGet -ForceBootstrap | Out-Null
+        Import-PackageProvider PowerShellGet 
+        Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
+
+        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue
+      shell: pwsh
+        
