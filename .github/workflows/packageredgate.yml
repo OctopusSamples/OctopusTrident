@@ -28,15 +28,15 @@ jobs:
 
         Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction Stop -AcceptLicense
         Import-Module SqlChangeAutomation
-        $OctopusSQLServer = ${env:OCTOPUS_SQL_SERVER}
+        $OctopusSQLServer = ${secrets:OCTOPUS_SQL_SERVER}
         Write-Host "Octopus SQL Server: $OctopusSQLServer"
 
-        $OctopusSQLServerUserName = ${env:OCTOPUS_SQL_SERVER_USERNAME}
-        $OctopusSQLServerPassword = ${env:OCTOPUS_SQL_SERVER_PASSWORD}
+        $OctopusSQLServerUserName = ${secrets:OCTOPUS_SQL_SERVER_USERNAME}
+        $OctopusSQLServerPassword = ${secrets:OCTOPUS_SQL_SERVER_PASSWORD}
         $OctopusSQLServerConnectionString="Data Source=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 
         $project = "db/src"
-        $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase $OctopusSQLServerConnectionString
+        $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase "$OctopusSQLServerConnectionString"
 
         $PackageVersionNumber = "${env:VERSION_SUFFIX}.${env.GITHUB_RUN_NUMBER}"
         Write-Host $PackageVersionNumber
