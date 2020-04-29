@@ -33,7 +33,7 @@ jobs:
 
         $OctopusSQLServerUserName = ${env:OCTOPUS_SQL_SERVER_USERNAME}
         $OctopusSQLServerPassword = ${env:OCTOPUS_SQL_SERVER_PASSWORD}
-        $OctopusSQLServerConnectionString="Server=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+        $OctopusSQLServerConnectionString="Data Source=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 
         $project = "db/src"
         $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase $OctopusSQLServerConnectionString
