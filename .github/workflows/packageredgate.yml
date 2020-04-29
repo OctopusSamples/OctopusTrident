@@ -5,7 +5,7 @@ on:
     branches: [ master ]    
 
 env:
-  VERSION_SUFFIX: 2020.1.1.$GITHUB_RUN_NUMBER
+  VERSION_SUFFIX: 2020.1.1
 
 jobs:
   build:
@@ -21,12 +21,11 @@ jobs:
       run: echo "::set-env PACKAGE_VERSION=$VERSION_SUFFIX.$GITHUB_RUN_NUMBER"
     
     - name: Make package directories
-      run: New-Item -path packagesoutput -ItemType Directory
-      shell: pwsh
+      run: mkdir -p ./packagesoutput/
     
     - name: Install and build Redgate Packages
       run: |
-        $LocalModules = (New-Item "$Home\Documents\WindowsPowerShell\Modules" -ItemType Directory -Force).FullName
+        $LocalModules = (New-Item "$PSScriptRoot\Modules" -ItemType Directory -Force).FullName
         Write-Host "LocalModules: $LocalModules"
         $env:PSModulePath = "$LocalModules;$env:PSModulePath"
         
@@ -36,18 +35,18 @@ jobs:
 
         Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction SilentlyContinue -AcceptLicense
         $OctopusSQLServer = ${env:OCTOPUS_SQL_SERVER}
-        Write-Host $OctopusSQLServer
+        Write-Host "Octopus SQL Server: $OctopusSQLServer"
 
         $OctopusSQLServerUserName = ${env:OCTOPUS_SQL_SERVER_USERNAME}
         $OctopusSQLServerPassword = ${env:OCTOPUS_SQL_SERVER_PASSWORD}
         $OctopusSQLServerConnectionString="Server=$OctopusSQLServer;Initial Catalog=octopustridentbuild;Persist Security Info=False;User ID=$OctopusSQLServerUserName;Password=$OctopusSQLServerPassword;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 
-        $project = "db\src"
+        $project = "db/src"
         $validatedArtifact = $project | Invoke-DatabaseBuild -TemporaryDatabase $OctopusSQLServerConnectionString
 
         $PackageVersionNumber = ${env:PACKAGE_VERSION}
         Write-Host $PackageVersionNumber
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
-        Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
+        Export-DatabaseBuildArtifact $buildArtifact -Path "./packagesoutput/" 
       shell: pwsh     
         
