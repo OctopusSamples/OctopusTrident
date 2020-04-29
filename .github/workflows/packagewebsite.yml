@@ -2,7 +2,8 @@ name: Package Website
 
 on:
   push:
-    branches: [ master ]
+    paths:
+      - 'src/**'
 
 jobs:
   build:
