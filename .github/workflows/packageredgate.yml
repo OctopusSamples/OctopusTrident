@@ -2,8 +2,7 @@ name: Package Database
 
 on:
   push:
-    paths:
-    - 'db/src/**'
+    branches: [ master ]    
 
 env:
   VERSION_SUFFIX: 2020.1.1
