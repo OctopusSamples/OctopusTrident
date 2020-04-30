@@ -7,6 +7,7 @@ on:
 env:
   VERSION_PREFIX: 2020.1.1
   PACKAGES_FOLDER: Modules
+  OUTPUT_FOLDER: PackagesOutput
 
 jobs:
   build:
@@ -24,22 +25,25 @@ jobs:
         Write-Host "Found $versionFromFile in versionprefix.md"
         $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
         Write-Host "Setting environment version number to: $versionNumber"
-        Write-Host "::set-env PACKAGE_VERSION=$versionNumber"
+        echo "::set-env PACKAGE_VERSION=$versionNumber"
       shell: powershell
 
     - name: Install Octopus Tooling
       run: choco install octopustools -y
       shell: powershell
 
-    - name: Make Packages Folder
+    - name: Make Install Modules Folder
       run: New-Item "$PSScriptRoot\${env:PACKAGES_FOLDER}" -ItemType Directory -Force
+      shell: powershell
+
+    - name: Make Packages Output Folder
+      run: New-Item "${env:OUTPUT_FOLDER}" -ItemType Directory
       shell: powershell
     
     - name: Install Redgate Tooling
       run: |
         $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
-        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
-      
+              
         Get-PackageProvider NuGet -ForceBootstrap | Out-Null
         Import-PackageProvider PowerShellGet 
         Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
@@ -48,7 +52,10 @@ jobs:
       shell: powershell    
     
     - name: Build Redgate Packages      
-      run: |               
+      run: |
+        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
+        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
+        
         Import-Module SqlChangeAutomation
         
         $project = "db/src"
@@ -59,8 +66,7 @@ jobs:
 
         Write-Host "Package Version Environment Variable ${env:PACKAGE_VERSION}"
 
-        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
-        New-Item "packagesoutput" -ItemType Directory
-        Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
+        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber        
+        Export-DatabaseBuildArtifact $buildArtifact -Path "${env:OUTPUT_FOLDER}" 
       shell: powershell     
         
