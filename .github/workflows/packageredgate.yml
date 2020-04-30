@@ -25,7 +25,7 @@ jobs:
         $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
         Write-Host "Setting environment version number to: $versionNumber"
         Write-Host "::set-env PACKAGE_VERSION=$versionNumber"
-      shell:
+      shell: powershell
 
     - name: Install Octopus Tooling
       run: choco install octopustools -y
@@ -50,7 +50,7 @@ jobs:
     - name: Build Redgate Packages      
       run: |
         Write-Host "The local modules are: ${env:PSModulePath}"
-        
+
         $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
         $env:PSModulePath = "$LocalModules;$env:PSModulePath"
         
