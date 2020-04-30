@@ -25,7 +25,7 @@ jobs:
         Write-Host "Found $versionFromFile in versionprefix.md"
         $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
         Write-Host "Setting environment version number to: $versionNumber"
-        echo "::set-env PACKAGE_VERSION=$versionNumber"
+        echo "::set-env name=PACKAGE_VERSION::$versionNumber"
       shell: powershell
 
     - name: Install Octopus Tooling
