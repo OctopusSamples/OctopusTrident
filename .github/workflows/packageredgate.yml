@@ -48,12 +48,7 @@ jobs:
       shell: powershell    
     
     - name: Build Redgate Packages      
-      run: |
-        Write-Host "The local modules are: ${env:PSModulePath}"
-
-        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
-        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
-        
+      run: |               
         Import-Module SqlChangeAutomation
         
         $project = "db/src"
