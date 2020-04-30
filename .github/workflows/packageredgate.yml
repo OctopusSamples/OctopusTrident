@@ -4,13 +4,13 @@ on:
   push:
     branches: [ master ]    
 
-env:
-  VERSION_PREFIX: 2020.1.1
+env:  
   PACKAGES_FOLDER: Modules
   OUTPUT_FOLDER: PackagesOutput
   PACKAGE_NAME: OctopusTrident.Redgate.Database
   OCTOPUS_PROJECT_NAME: Redgate - Feature Branch Example
   OCTOPUS_DEPLOY_ENVIRONMENT: Test
+  OCTOPUS_SPACE_NAME: Target - SQL Server
 
 jobs:
   build:
@@ -71,8 +71,7 @@ jobs:
     - name: Handoff to Octopus Deploy
       env:
         OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
-        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
-        OCTOPUS_SPACE_NAME: ${{ secrets.OCTOPUS_SPACE_NAME }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}        
       run: |        
         octo push --package="${env:OUTPUT_FOLDER}\${env:PACKAGE_NAME}.${env:PACKAGE_VERSION}.nupkg" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
 
@@ -82,9 +81,12 @@ jobs:
         $commitMessage = $commitMessage -replace "${env:GITHUB_SHA} ", ""
         Write-Host "Commit Message: $commitMessage"
 
+        $branchName = ${env:GITHUB_REF} -replace "refs/head/", ""
+        Write-Host "$branchName"
+
         $jsonBody = @{
           BuildEnvironment = "GitHub Actions"
-          Branch = "${env:GITHUB_REF}"
+          Branch = "$branchName"
           BuildNumber = "${env:GITHUB_RUN_NUMBER}"
           BuildUrl = "https://github.com/${env:GITHUB_REPOSITORY}/actions/runs/${env:GITHUB_RUN_ID}"
           VcsCommitNumber = "${env:GITHUB_SHA}"
