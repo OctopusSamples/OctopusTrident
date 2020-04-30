@@ -72,6 +72,31 @@ jobs:
         OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
         OCTOPUS_SPACE_NAME: ${{ secrets.OCTOPUS_SPACE_NAME }}
       run: |
-        octo push --package="${env:OUTPUT_FOLDER}\${env:PACKAGE_NAME}.${env:PACKAGE_VERSION}.nupkg" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"          
+        octo push --package="${env:OUTPUT_FOLDER}\${env:PACKAGE_NAME}.${env:PACKAGE_VERSION}.nupkg" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
+
+        Write-Host "Building the build information"
+        
+        $commitMessage = git log -1 --pretty=oneline --abbrev-commit
+        Write-Host "Commit Message: $commitMessage"
+
+        $jsonBody = @{
+          BuildEnvironment = "GitHub Actions"
+          Branch = "${env:GITHUB_REF}"
+          BuildNumber = "${env:GITHUB_RUN_NUMBER}"
+          BuildUrl = "https://github.com/${env:GITHUB_REPOSITORY}/actions/runs/${env:GITHUB_RUN_ID}"
+          VcsCommitNumber = "${env:GITHUB_SHA}"
+          VcsType = "Git"
+          VcsRoot = "https://github.com/${env:GITHUB_REPOSITORY}.git"
+          Commits = @[
+            @{
+              Id = "${env:GITHUB_SHA}"
+              LinkUrl = "https://github.com/${env:GITHUB_REPOSITORY}/commit/${env:GITHUB_SHA}"
+              Comment = "$commitMessage"
+            }
+          ]
+        } | ConvertTo-Json -Depth 10
+
+        Write-Host $jsonBody
+
       shell: powershell
         
