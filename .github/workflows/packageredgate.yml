@@ -87,13 +87,13 @@ jobs:
           VcsCommitNumber = "${env:GITHUB_SHA}"
           VcsType = "Git"
           VcsRoot = "https://github.com/${env:GITHUB_REPOSITORY}.git"
-          Commits = @[
+          Commits = @(
             @{
               Id = "${env:GITHUB_SHA}"
               LinkUrl = "https://github.com/${env:GITHUB_REPOSITORY}/commit/${env:GITHUB_SHA}"
               Comment = "$commitMessage"
             }
-          ]
+          )
         } | ConvertTo-Json -Depth 10
 
         Write-Host $jsonBody
