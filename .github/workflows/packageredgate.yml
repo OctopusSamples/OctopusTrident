@@ -5,7 +5,8 @@ on:
     branches: [ master ]    
 
 env:
-  VERSION_SUFFIX: 2020.1.1
+  VERSION_PREFIX: 2020.1.1
+  PACKAGES_FOLDER: Modules
 
 jobs:
   build:
@@ -14,26 +15,55 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2      
-    
-    - name: Install and build Redgate Packages      
+    - uses: actions/checkout@v2
+
+    - name: Set version
+      id: set-version
       run: |
-        $LocalModules = (New-Item "$PSScriptRoot\Modules" -ItemType Directory -Force).FullName
-        Write-Host "LocalModules: $LocalModules"
+        $versionFromFile = Get-Content versionprefix.md 
+        Write-Host "Found $versionFromFile in versionprefix.md"
+        $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
+        Write-Host "Setting environment version number to: $versionNumber"
+        Write-Host "::set-env PACKAGE_VERSION=$versionNumber"
+      shell:
+
+    - name: Install Octopus Tooling
+      run: choco install octopustools -y
+      shell: powershell
+
+    - name: Make Packages Folder
+      run: New-Item "$PSScriptRoot\${env:PACKAGES_FOLDER}" -ItemType Directory -Force
+      shell: powershell
+    
+    - name: Install Redgate Tooling
+      run: |
+        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
         $env:PSModulePath = "$LocalModules;$env:PSModulePath"
-        
+      
         Get-PackageProvider NuGet -ForceBootstrap | Out-Null
         Import-PackageProvider PowerShellGet 
         Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
 
-        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction Stop -AcceptLicense
+        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction Stop -AcceptLicense        
+      shell: powershell    
+    
+    - name: Build Redgate Packages      
+      run: |
+        Write-Host "The local modules are: ${env:PSModulePath}"
+        
+        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
+        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
+        
         Import-Module SqlChangeAutomation
         
         $project = "db/src"
         $validatedProject = $project | Invoke-DatabaseBuild
 
-        $PackageVersionNumber = "${env:VERSION_SUFFIX}.${env:GITHUB_RUN_NUMBER}"
+        $PackageVersionNumber = "${env:VERSION_PREFIX}.${env:GITHUB_RUN_NUMBER}"
         Write-Host $PackageVersionNumber
+
+        Write-Host "Package Version Environment Variable ${env:PACKAGE_VERSION}"
+
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber
         New-Item "packagesoutput" -ItemType Directory
         Export-DatabaseBuildArtifact $buildArtifact -Path "packagesoutput" 
