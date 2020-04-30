@@ -59,14 +59,18 @@ jobs:
         Import-Module SqlChangeAutomation
         
         $project = "db/src"
-        $validatedProject = $project | Invoke-DatabaseBuild
+        $validatedProject = $project | Invoke-DatabaseBuild        
 
-        $PackageVersionNumber = "${env:VERSION_PREFIX}.${env:GITHUB_RUN_NUMBER}"
-        Write-Host $PackageVersionNumber
-
-        Write-Host "Package Version Environment Variable ${env:PACKAGE_VERSION}"
-
-        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion $PackageVersionNumber        
+        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "OctopusTrident.Redgate.Database" -PackageVersion ${env:PACKAGE_VERSION}        
         Export-DatabaseBuildArtifact $buildArtifact -Path "${env:OUTPUT_FOLDER}" 
-      shell: powershell     
+      shell: powershell   
+      
+    - name: Push Package to Octopus Deploy
+      env:
+        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}
+        OCTOPUS_SPACE_NAME: ${{ secrets.OCTOPUS_SPACE_NAME }}
+      run: |
+        octo version
+      shell: powershell
         
