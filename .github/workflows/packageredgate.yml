@@ -2,14 +2,15 @@ name: Package Database
 
 on:
   push:
-    branches: [ master ]    
+    branches: 
+      - master
+      - 'feature/**'    
 
 env:  
   PACKAGES_FOLDER: Modules
   OUTPUT_FOLDER: PackagesOutput
   PACKAGE_NAME: OctopusTrident.Redgate.Database
-  OCTOPUS_PROJECT_NAME: Redgate - Feature Branch Example
-  OCTOPUS_DEPLOY_ENVIRONMENT: Test
+  OCTOPUS_PROJECT_NAME: Redgate - Feature Branch Example  
   OCTOPUS_SPACE_NAME: Target - SQL Server
 
 jobs:
@@ -21,14 +22,30 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set version
-      id: set-version
+    - name: Set environment variables      
       run: |
+        $branchName = ${env:GITHUB_REF} -replace "refs/head/", ""
+        Write-Host "$branchName"  
+
         $versionFromFile = Get-Content versionprefix.md 
         Write-Host "Found $versionFromFile in versionprefix.md"
         $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
         Write-Host "Setting environment version number to: $versionNumber"
+
+        $channelName = "Default"
+        $deployEnvironment = "Staging"
+
+        if ($branchName -ne "master")
+        {
+           $versionNumber = "$versionNumber-$branchName"
+           $channelName = "Feature Branches"
+           $deployEnvironment = "Test"
+        }
+
+        echo "::set-env name=BRANCH_NAME::$branchName"
         echo "::set-env name=PACKAGE_VERSION::$versionNumber"
+        echo "::set-env name=CHANNEL_NAME::$channelName"
+        echo "::set-env name=ENVIRONMENT_NAME::$deployEnvironment"
       shell: powershell
 
     - name: Install Octopus Tooling
@@ -79,14 +96,11 @@ jobs:
         
         $commitMessage = git log -1 --pretty=oneline
         $commitMessage = $commitMessage -replace "${env:GITHUB_SHA} ", ""
-        Write-Host "Commit Message: $commitMessage"
-
-        $branchName = ${env:GITHUB_REF} -replace "refs/head/", ""
-        Write-Host "$branchName"
+        Write-Host "Commit Message: $commitMessage"        
 
         $jsonBody = @{
           BuildEnvironment = "GitHub Actions"
-          Branch = "$branchName"
+          Branch = "${env:BRANCH_NAME}"
           BuildNumber = "${env:GITHUB_RUN_NUMBER}"
           BuildUrl = "https://github.com/${env:GITHUB_REPOSITORY}/actions/runs/${env:GITHUB_RUN_ID}"
           VcsCommitNumber = "${env:GITHUB_SHA}"
@@ -105,7 +119,6 @@ jobs:
         Set-Content -Path "buildinformation.json" -Value $jsonBody
 
         octo build-information --package-id="${env:PACKAGE_NAME}" --file="buildinformation.json" --version="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
-        octo create-release --project="${env:OCTOPUS_PROJECT_NAME}" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:OCTOPUS_DEPLOY_ENVIRONMENT}"
+        octo create-release --project="${env:OCTOPUS_PROJECT_NAME}" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:ENVIRONMENT_NAME}" --channel="${env:CHANNEL_NAME}"
 
-      shell: powershell
-        
+      shell: powershell        
