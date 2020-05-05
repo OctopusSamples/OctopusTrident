@@ -24,7 +24,7 @@ jobs:
 
     - name: Set environment variables      
       run: |
-        $branchName = ${env:GITHUB_REF} -replace "refs/head/", ""
+        $branchName = ${env:GITHUB_REF} -replace "refs/heads/", ""
         Write-Host "$branchName"  
 
         $versionFromFile = Get-Content versionprefix.md 
