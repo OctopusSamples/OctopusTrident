@@ -119,6 +119,6 @@ jobs:
         Set-Content -Path "buildinformation.json" -Value $jsonBody
 
         octo build-information --package-id="${env:PACKAGE_NAME}" --file="buildinformation.json" --version="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
-        octo create-release --project="${env:OCTOPUS_PROJECT_NAME}" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:ENVIRONMENT_NAME}" --channel="${env:CHANNEL_NAME}"
+        octo create-release --project="${env:OCTOPUS_PROJECT_NAME}" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:ENVIRONMENT_NAME}" --channel="${env:CHANNEL_NAME}" --variable="Feature Branch Name:${env:BRANCH_NAME}"
 
       shell: powershell        
