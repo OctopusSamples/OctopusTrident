@@ -32,9 +32,9 @@ jobs:
 
         if ($branchName -like "refs/pull*")
         {
-          $branchName = ($branchName -replace "refs/pull/", "") -replace "/", "-"
+          $branchName = ($branchName -replace "refs/pull/", "") -replace "/", ""
           Write-Host "This is a pull request, creating a feature branch for that"
-          $branchName = "PullRequest_$branchName"
+          $branchName = "PullRequest$branchName"
         }
         Write-Host "$branchName"  
 
