@@ -51,7 +51,9 @@ jobs:
           $indexOfSlash = $commitMessage.ToString().IndexOf('/')
           Write-Host "The index of the slash is $indexOfSlash"
           $mergedBranch = $commitMessage.SubString($commitMessage.IndexOf("/") + 1)
+          Write-Host "The merged branch before replacement is $mergedBranch"
           $mergedBranch = ($mergedBranch -replace "feature/", "") -replace "bugfix/", ""          
+          Write-Host "The merged branch is now $mergedBranch"
         }
 
         Write-Host "Setting environment variable PACKAGE_VERSION to: $versionNumber"
