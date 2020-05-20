@@ -4,7 +4,8 @@ on:
   push:
     branches: 
       - master
-      - 'feature/**'    
+      - 'feature/**'
+      - 'bugfix/**'    
 
 env:  
   PACKAGES_FOLDER: Modules
@@ -24,7 +25,7 @@ jobs:
 
     - name: Set environment variables      
       run: |
-        $branchName = (${env:GITHUB_REF} -replace "refs/heads/", "") -replace "feature/", ""
+        $branchName = ((${env:GITHUB_REF} -replace "refs/heads/", "") -replace "feature/", "") -replace "bugfix/", ""
         Write-Host "$branchName"  
 
         $versionFromFile = Get-Content versionprefix.md 
@@ -43,6 +44,7 @@ jobs:
            $versionNumber = "$versionNumber-$branchName"
            $channelName = "Feature Branches"
            $deployEnvironment = "Test"
+           $versionNumber = "2020.99.99.${env:GITHUB_RUN_NUMBER}"
         }
         elseif ($branchName -eq "master" -and $commitMessage -like "Merge pull request*")
         {          
