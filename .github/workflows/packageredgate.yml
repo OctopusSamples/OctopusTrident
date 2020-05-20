@@ -31,8 +31,7 @@ jobs:
         $versionFromFile = Get-Content versionprefix.md 
         Write-Host "Found $versionFromFile in versionprefix.md"
         $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
-        Write-Host "Setting environment version number to: $versionNumber"
-
+        
         $channelName = "Default"
         $deployEnvironment = "Staging"
         $mergedBranch = ""
@@ -41,10 +40,10 @@ jobs:
 
         if ($branchName -ne "master")
         {
+           $versionNumber = "2020.99.99.${env:GITHUB_RUN_NUMBER}"
            $versionNumber = "$versionNumber-$branchName"
            $channelName = "Feature Branches"
-           $deployEnvironment = "Test"
-           $versionNumber = "2020.99.99.${env:GITHUB_RUN_NUMBER}"
+           $deployEnvironment = "Test"           
         }
         elseif ($branchName -eq "master" -and $commitMessage -like "Merge pull request*")
         {          
@@ -53,6 +52,12 @@ jobs:
           $mergedBranch = $commitMessage.SubString($commitMessage.IndexOf("/") + 1)
           $mergedBranch = $mergedBranch -replace "feature/", ""          
         }
+
+        Write-Host "Setting environment variable PACKAGE_VERSION to: $versionNumber"
+        Write-Host "Setting environment variable BRANCH_NAME to: $branchName"
+        Write-Host "Setting environment variable CHANNEL_NAME to: $channelName"
+        Write-Host "Setting environment variable ENVIRONMENT_NAME to: $deployEnvironment"
+        Write-Host "Setting environment variable MERGED_BRANCH to: $mergedBranch"
 
         echo "::set-env name=BRANCH_NAME::$branchName"
         echo "::set-env name=PACKAGE_VERSION::$versionNumber"
