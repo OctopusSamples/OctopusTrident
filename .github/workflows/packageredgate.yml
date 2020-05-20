@@ -46,7 +46,7 @@ jobs:
            $channelName = "Feature Branches"
            $deployEnvironment = "Test"           
         }
-        elseif ($branchName -eq "master" -and $commitMessage -like "Merge pull request*")
+        elseif ($branchName -eq "master" -and $commitMessage -like "*Merge pull request*")
         {          
           $indexOfSlash = $commitMessage.ToString().IndexOf('/')
           Write-Host "The index of the slash is $indexOfSlash"
