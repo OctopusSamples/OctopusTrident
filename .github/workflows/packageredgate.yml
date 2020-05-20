@@ -37,6 +37,7 @@ jobs:
         $mergedBranch = ""
 
         $commitMessage = git log -1 --pretty=oneline
+        Write-Host "The commit message is: $commitMessage"
 
         if ($branchName -ne "master")
         {
@@ -50,7 +51,7 @@ jobs:
           $indexOfSlash = $commitMessage.ToString().IndexOf('/')
           Write-Host "The index of the slash is $indexOfSlash"
           $mergedBranch = $commitMessage.SubString($commitMessage.IndexOf("/") + 1)
-          $mergedBranch = $mergedBranch -replace "feature/", ""          
+          $mergedBranch = ($mergedBranch -replace "feature/", "") -replace "bugfix/", ""          
         }
 
         Write-Host "Setting environment variable PACKAGE_VERSION to: $versionNumber"
