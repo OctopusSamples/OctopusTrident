@@ -5,7 +5,7 @@ on:
     branches: 
       - master
       - 'feature/**'
-      - 'bugfix/**'    
+      - 'hotfix/**'    
 
 env:  
   PACKAGES_FOLDER: Modules
@@ -25,7 +25,7 @@ jobs:
 
     - name: Set environment variables      
       run: |
-        $branchName = ((${env:GITHUB_REF} -replace "refs/heads/", "") -replace "feature/", "") -replace "bugfix/", ""
+        $branchName = ((${env:GITHUB_REF} -replace "refs/heads/", "") -replace "feature/", "") -replace "hotfix/", ""
         Write-Host "$branchName"  
 
         $versionFromFile = Get-Content versionprefix.md 
@@ -41,8 +41,7 @@ jobs:
 
         if ($branchName -ne "master")
         {
-           $versionNumber = "2020.99.99.${env:GITHUB_RUN_NUMBER}"
-           $versionNumber = "$versionNumber-$branchName"
+           $versionNumber = "2020.99.99.${env:GITHUB_RUN_NUMBER}-$branchName"           
            $channelName = "Feature Branches"
            $deployEnvironment = "Test"           
         }
@@ -52,7 +51,7 @@ jobs:
           Write-Host "The index of the slash is $indexOfSlash"
           $mergedBranch = $commitMessage.SubString($commitMessage.IndexOf("/") + 1)
           Write-Host "The merged branch before replacement is $mergedBranch"
-          $mergedBranch = ($mergedBranch -replace "feature/", "") -replace "bugfix/", ""          
+          $mergedBranch = ($mergedBranch -replace "feature/", "") -replace "hotfix/", ""          
           Write-Host "The merged branch is now $mergedBranch"
         }
 
