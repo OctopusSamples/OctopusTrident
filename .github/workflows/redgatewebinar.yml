@@ -1,0 +1,124 @@
+name: Package Database Webinar
+
+on:
+  push:
+    branches: 
+      - master
+      - 'feature/**'
+      - 'hotfix/**'    
+
+env:  
+  PACKAGES_FOLDER: Modules
+  OUTPUT_FOLDER: PackagesOutput
+  PACKAGE_NAME: Webinar.Redgate.Database
+  OCTOPUS_PROJECT_NAME: Redgate - Webinar  
+  OCTOPUS_SPACE_NAME: Target - SQL Server
+  CHANNEL_NAME: Default
+  ENVIRONMENT_NAME: Test
+
+jobs:
+  build:
+    name: Build and Push Database
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set environment variables      
+      run: |
+        $branchName = ((${env:GITHUB_REF} -replace "refs/heads/", "") -replace "feature/", "") -replace "hotfix/", ""
+        Write-Host "$branchName"  
+
+        $versionFromFile = Get-Content versionprefix.md 
+        Write-Host "Found $versionFromFile in versionprefix.md"
+        $versionNumber = "$versionfromFile.${env:GITHUB_RUN_NUMBER}"
+        
+        $mergedBranch = ""
+
+        $commitMessage = git log -1 --pretty=oneline
+        Write-Host "The commit message is: $commitMessage"        
+
+        Write-Host "Setting environment variable PACKAGE_VERSION to: $versionNumber"
+        Write-Host "Setting environment variable BRANCH_NAME to: $branchName"        
+        Write-Host "Setting environment variable MERGED_BRANCH to: $mergedBranch"
+
+        echo "::set-env name=BRANCH_NAME::$branchName"
+        echo "::set-env name=PACKAGE_VERSION::$versionNumber"        
+        echo "::set-env name=MERGED_BRANCH::$mergedBranch"
+      shell: powershell
+
+    - name: Install Octopus Tooling
+      run: choco install octopustools -y
+      shell: powershell
+
+    - name: Make Install Modules Folder
+      run: New-Item "$PSScriptRoot\${env:PACKAGES_FOLDER}" -ItemType Directory -Force
+      shell: powershell
+
+    - name: Make Packages Output Folder
+      run: New-Item "${env:OUTPUT_FOLDER}" -ItemType Directory
+      shell: powershell
+    
+    - name: Install Redgate Tooling
+      run: |
+        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
+              
+        Get-PackageProvider NuGet -ForceBootstrap | Out-Null
+        Import-PackageProvider PowerShellGet 
+        Save-Module -Name PowerShellGet -Path $LocalModules -MinimumVersion 1.6 -Force -ErrorAction SilentlyContinue
+
+        Save-Module -Name SqlChangeAutomation -Path $LocalModules -Force -ErrorAction Stop -AcceptLicense        
+      shell: powershell    
+    
+    - name: Build Redgate Packages      
+      run: |
+        $LocalModules = "$PSScriptRoot\${env:PACKAGES_FOLDER}"
+        $env:PSModulePath = "$LocalModules;$env:PSModulePath"
+        
+        Import-Module SqlChangeAutomation
+        
+        $project = "db/src"
+        $validatedProject = $project | Invoke-DatabaseBuild        
+
+        $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "${env:PACKAGE_NAME}" -PackageVersion "${env:PACKAGE_VERSION}"
+        Export-DatabaseBuildArtifact $buildArtifact -Path "${env:OUTPUT_FOLDER}" 
+      shell: powershell   
+      
+    - name: Handoff to Octopus Deploy
+      env:
+        OCTOPUS_URL: ${{ secrets.OCTOPUS_SERVER_URL }}
+        OCTOPUS_API_KEY: ${{ secrets.OCTOPUS_API_KEY }}        
+      run: |        
+        octo push --package="${env:OUTPUT_FOLDER}\${env:PACKAGE_NAME}.${env:PACKAGE_VERSION}.nupkg" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
+
+        Write-Host "Building the build information"
+        
+        $commitMessage = git log -1 --pretty=oneline
+        $commitMessage = $commitMessage -replace "${env:GITHUB_SHA} ", ""
+        Write-Host "Commit Message: $commitMessage"        
+
+        $jsonBody = @{
+          BuildEnvironment = "GitHub Actions"
+          Branch = "${env:BRANCH_NAME}"
+          BuildNumber = "${env:GITHUB_RUN_NUMBER}"
+          BuildUrl = "https://github.com/${env:GITHUB_REPOSITORY}/actions/runs/${env:GITHUB_RUN_ID}"
+          VcsCommitNumber = "${env:GITHUB_SHA}"
+          VcsType = "Git"
+          VcsRoot = "https://github.com/${env:GITHUB_REPOSITORY}.git"
+          Commits = @(
+            @{
+              Id = "${env:GITHUB_SHA}"
+              LinkUrl = "https://github.com/${env:GITHUB_REPOSITORY}/commit/${env:GITHUB_SHA}"
+              Comment = "$commitMessage"
+            }
+          )
+        } | ConvertTo-Json -Depth 10
+
+        New-Item "buildinformation.json" -ItemType File
+        Set-Content -Path "buildinformation.json" -Value $jsonBody
+
+        octo build-information --package-id="${env:PACKAGE_NAME}" --file="buildinformation.json" --version="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}"
+        octo create-release --project="${env:OCTOPUS_PROJECT_NAME}" --packageVersion="${env:PACKAGE_VERSION}" --releaseNumber="${env:PACKAGE_VERSION}" --server="${env:OCTOPUS_URL}" --apiKey="${env:OCTOPUS_API_KEY}" --space="${env:OCTOPUS_SPACE_NAME}" --deployTo="${env:ENVIRONMENT_NAME}" --channel="${env:CHANNEL_NAME}" --variable="Feature Branch Name:${env:BRANCH_NAME}" --variable="Merged Branch Name:${env:MERGED_BRANCH}"
+
+      shell: powershell        
