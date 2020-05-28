@@ -34,6 +34,7 @@
     <EvaluateExecutionOrderOnImport>True</EvaluateExecutionOrderOnImport>
     <Provisioner>CustomScripts</Provisioner>
     <IncludeObjectsInDataSync>Table=[dbo].[SyncLogType]</IncludeObjectsInDataSync>
+    <SkipBaselineCheck>True</SkipBaselineCheck>
   </PropertyGroup>
   <!-- SQL CHANGE AUTOMATION OFFLINE SCHEMA MODEL OPTIONS -->
   <PropertyGroup>
