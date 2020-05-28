@@ -78,7 +78,7 @@ jobs:
         
         Import-Module SqlChangeAutomation
         
-        $project = "db/src"
+        $project = "db/sca/OctopusTrident/OctopusTrident.sqlproj"
         $validatedProject = $project | Invoke-DatabaseBuild        
 
         $buildArtifact = New-DatabaseBuildArtifact $validatedProject -PackageId "${env:PACKAGE_NAME}" -PackageVersion "${env:PACKAGE_VERSION}"
