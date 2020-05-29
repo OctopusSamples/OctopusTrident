@@ -187,6 +187,8 @@
     <None Include="Schema-Model\dbo\Tables\SyncLogType.sql" />
     <None Include="Migrations\003_20200528-0941_Bob.Walker.sql" />
     <None Include="Migrations\004_20200528-1451_Bob.Walker.sql" />
+    <None Include="Migrations\005_20200529-0946_Bob.Walker.sql" />
+    <None Include="Schema-Model\dbo\Tables\Channel.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Pre-Deployment\01_Initialize_Deployment.sql" />
